@@ -67,7 +67,7 @@
                     c.DisableFeature<AutoSubscribe>();
                 })
                     .AddMapping<EventOne>(typeof(PublisherOne))
-                    .AddMapping<EventOne>(typeof(PublisherTwo));
+                    .AddMapping<EventTwo>(typeof(PublisherTwo));
             }
 
             public class MyEventHandler : IHandleMessages<IBaseEvent>

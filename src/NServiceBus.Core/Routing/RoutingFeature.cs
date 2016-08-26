@@ -1,5 +1,6 @@
 ﻿namespace NServiceBus.Features
 {
+    using System.Linq;
     using Config;
     using Routing;
     using Routing.MessageDrivenSubscriptions;
@@ -38,7 +39,8 @@
             var conventions = context.Settings.Get<Conventions>();
             var unicastBusConfig = context.Settings.GetConfigSection<UnicastBusConfig>();
 
-            unicastBusConfig?.MessageEndpointMappings.Apply(publishers, unicastRoutingTable, transportInfrastructure.MakeCanonicalForm);
+            var allMessageTypes = context.Settings.GetAvailableTypes().Where(t => conventions.IsMessageType(t)).ToArray();
+            unicastBusConfig?.MessageEndpointMappings.Apply(publishers, unicastRoutingTable, transportInfrastructure.MakeCanonicalForm, allMessageTypes);
             configuredUnicastRoutes.Apply(unicastRoutingTable, conventions);
             configuredPublishers.Apply(publishers, conventions);
 

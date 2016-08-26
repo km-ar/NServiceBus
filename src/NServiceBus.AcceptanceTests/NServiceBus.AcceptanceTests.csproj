@@ -77,6 +77,7 @@
     <Compile Include="Routing\When_publishing_an_interface_with_unobtrusive.cs" />
     <Compile Include="Routing\When_replying_to_message_with_interface.cs" />
     <Compile Include="Routing\When_subscribing_to_a_base_event_on_unicast_transports.cs" />
+    <Compile Include="Routing\When_routing_exists_for_base_and_derived_command.cs" />
     <Compile Include="Routing\When_subscribing_to_a_base_event_with_routes_to_base_and_specific_events_pointing_to_different_publishers.cs" />
     <Compile Include="Routing\When_subscribing_to_a_base_event_with_a_route_for_a_derived_events.cs" />
     <Compile Include="Routing\When_subscribing_to_a_derived_event_with_a_route_for_base_event.cs" />

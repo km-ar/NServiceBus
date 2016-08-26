@@ -166,23 +166,41 @@ namespace NServiceBus.Config
             return false;
         }
 
-        internal void Apply(Publishers publishers, UnicastRoutingTable unicastRoutingTable, Func<string, string> makeCanonicalAddress)
+        internal void Apply(Publishers publishers, UnicastRoutingTable unicastRoutingTable, Func<string, string> makeCanonicalAddress, Type[] allMessageTypes)
         {
             var routeTableEntries = new Dictionary<Type, RouteTableEntry>();
-            var publisherTableEntries = new Dictionary<Type, PublisherTableEntry>();
+            var publisherTableEntries = new List<PublisherTableEntry>();
 
             foreach (var m in this.Cast<MessageEndpointMapping>().OrderByDescending(m => m))
             {
                 m.Configure((type, endpointAddress) =>
                 {
                     var canonicalForm = makeCanonicalAddress(endpointAddress);
-                    routeTableEntries[type] = new RouteTableEntry(type, UnicastRoute.CreateFromPhysicalAddress(canonicalForm));
-                    publisherTableEntries[type] = new PublisherTableEntry(type, PublisherAddress.CreateFromPhysicalAddresses(canonicalForm));
+                    var baseTypes = allMessageTypes.Where(candidate => candidate != type && candidate.IsAssignableFrom(type)).ToArray();
+
+                    RegisterMessageRoute(type, canonicalForm, routeTableEntries, baseTypes);
+                    RegisterEventRoute(type, canonicalForm, publisherTableEntries, baseTypes);
                 });
             }
 
-            publishers.AddOrReplacePublishers("MessageEndpointMappings", publisherTableEntries.Values.ToList());
+            publishers.AddOrReplacePublishers("MessageEndpointMappings", publisherTableEntries);
             unicastRoutingTable.AddOrReplaceRoutes("MessageEndpointMappings", routeTableEntries.Values.ToList());
+        }
+
+        static void RegisterEventRoute(Type mappedType, string address, List<PublisherTableEntry> publisherTableEntries, IEnumerable<Type> baseTypes)
+        {
+            var publisherAddress = PublisherAddress.CreateFromPhysicalAddresses(address);
+            publisherTableEntries.AddRange(baseTypes.Select(derivedType => new PublisherTableEntry(derivedType, publisherAddress)));
+            publisherTableEntries.Add(new PublisherTableEntry(mappedType, publisherAddress));
+        }
+
+        static void RegisterMessageRoute(Type mappedType, string address, Dictionary<Type, RouteTableEntry> routeTableEntries, IEnumerable<Type> baseTypes)
+        {
+            foreach (var baseType in baseTypes)
+            {
+                routeTableEntries[baseType] = new RouteTableEntry(baseType, UnicastRoute.CreateFromPhysicalAddress(address));
+            }
+            routeTableEntries[mappedType] = new RouteTableEntry(mappedType, UnicastRoute.CreateFromPhysicalAddress(address));
         }
     }
 }
